@@ -5,6 +5,10 @@ export const translations = {
     musicManagement: 'Music Management',
     customize: 'Customize',
     exit: 'Exit',
+    plugins: 'Plugins',
+    settings: 'Settings',
+    spotify: 'Spotify',
+    searchOnline: 'Search Online',
 
     // Main page
     searchSongs: 'Search Songs',
@@ -39,7 +43,6 @@ export const translations = {
     importMusic: 'Import Music',
     importFromFiles: 'Import from Files',
     importFromFolder: 'Import from Folder',
-    searchOnline: 'Search Online',
     searchPixabay: 'Search on Pixabay',
     searchFMA: 'Search Free Music Archive',
     storageManagement: 'Storage Management',
@@ -109,14 +112,8 @@ export const translations = {
     clear: 'Clear',
     noInternet: 'No internet connection',
     requiresInternet: 'This feature requires an internet connection',
+
     // Settings
-    plugins: 'Plugins',
-    plugins: 'Plugin',
-    plugins: 'Plugins',
-    plugins: 'Plugins',
-    plugins: 'Плагины',
-    spotify: 'Spotify',
-    settings: 'Settings',
     apiKeys: 'API Keys',
     pixabayApiKey: 'Pixabay API Key',
     pixabayApiKeyDesc: 'Used for searching free music online. Get a free key at pixabay.com/api/docs',
@@ -133,11 +130,17 @@ export const translations = {
   },
 
   id: {
+    // Nav
     main: 'Beranda',
     musicManagement: 'Manajemen Musik',
     customize: 'Kustomisasi',
     exit: 'Keluar',
+    plugins: 'Plugin',
+    settings: 'Pengaturan',
+    spotify: 'Spotify',
+    searchOnline: 'Cari Online',
 
+    // Main page
     searchSongs: 'Cari Lagu',
     searchPlaceholder: 'Cari berdasarkan judul, artis...',
     onlineOnly: 'Hanya online',
@@ -166,10 +169,10 @@ export const translations = {
     playAll: 'Putar Semua',
     shuffle: 'Acak',
 
+    // Music Management
     importMusic: 'Impor Musik',
     importFromFiles: 'Impor dari File',
     importFromFolder: 'Impor dari Folder',
-    searchOnline: 'Cari Online',
     searchPixabay: 'Cari di Pixabay',
     searchFMA: 'Cari Free Music Archive',
     storageManagement: 'Manajemen Penyimpanan',
@@ -190,6 +193,7 @@ export const translations = {
     confirmClear: 'Yakin ingin menghapus semua perpustakaan musik?',
     confirmDelete: 'Yakin ingin menghapus lagu ini?',
 
+    // Customize
     appearance: 'Tampilan',
     accentColor: 'Warna Aksen',
     backgroundColor: 'Warna Latar',
@@ -203,6 +207,7 @@ export const translations = {
     preview: 'Pratinjau',
     saveChanges: 'Simpan Perubahan',
 
+    // Player
     nowPlaying: 'Sedang Diputar',
     queue: 'Antrian',
     previous: 'Sebelumnya',
@@ -216,11 +221,13 @@ export const translations = {
     unmute: 'Aktifkan Suara',
     addToQueue: 'Tambah ke Antrian',
 
+    // Exit
     exitTitle: 'Keluar dari Omega',
     exitMessage: 'Yakin ingin keluar dari aplikasi?',
     yes: 'Ya, Keluar',
     no: 'Batal',
 
+    // General
     loading: 'Memuat...',
     error: 'Error',
     success: 'Berhasil',
@@ -235,14 +242,8 @@ export const translations = {
     clear: 'Bersihkan',
     noInternet: 'Tidak ada koneksi internet',
     requiresInternet: 'Fitur ini memerlukan koneksi internet',
+
     // Settings
-    plugins: 'Plugins',
-    plugins: 'Plugin',
-    plugins: 'Plugins',
-    plugins: 'Plugins',
-    plugins: 'Плагины',
-    spotify: 'Spotify',
-    settings: 'Pengaturan',
     apiKeys: 'API Keys',
     pixabayApiKey: 'Pixabay API Key',
     pixabayApiKeyDesc: 'Digunakan untuk mencari musik gratis secara online. Dapatkan key gratis di pixabay.com/api/docs',
@@ -259,11 +260,17 @@ export const translations = {
   },
 
   es: {
+    // Nav
     main: 'Inicio',
     musicManagement: 'Gestión de Música',
     customize: 'Personalizar',
     exit: 'Salir',
+    plugins: 'Plugins',
+    settings: 'Configuración',
+    spotify: 'Spotify',
+    searchOnline: 'Buscar en Línea',
 
+    // Main page
     searchSongs: 'Buscar Canciones',
     searchPlaceholder: 'Buscar por título, artista...',
     onlineOnly: 'Solo en línea',
@@ -292,10 +299,10 @@ export const translations = {
     playAll: 'Reproducir Todo',
     shuffle: 'Aleatorio',
 
+    // Music Management
     importMusic: 'Importar Música',
     importFromFiles: 'Importar Archivos',
     importFromFolder: 'Importar Carpeta',
-    searchOnline: 'Buscar en Línea',
     searchPixabay: 'Buscar en Pixabay',
     searchFMA: 'Buscar en Free Music Archive',
     storageManagement: 'Gestión de Almacenamiento',
@@ -316,6 +323,7 @@ export const translations = {
     confirmClear: '¿Estás seguro de borrar toda la biblioteca?',
     confirmDelete: '¿Estás seguro de eliminar esta canción?',
 
+    // Customize
     appearance: 'Apariencia',
     accentColor: 'Color de Acento',
     backgroundColor: 'Color de Fondo',
@@ -329,6 +337,7 @@ export const translations = {
     preview: 'Vista Previa',
     saveChanges: 'Guardar Cambios',
 
+    // Player
     nowPlaying: 'Reproduciendo',
     queue: 'Cola',
     previous: 'Anterior',
@@ -342,11 +351,13 @@ export const translations = {
     unmute: 'Activar Sonido',
     addToQueue: 'Agregar a Cola',
 
+    // Exit
     exitTitle: 'Salir de Omega',
     exitMessage: '¿Estás seguro de que quieres salir?',
     yes: 'Sí, Salir',
     no: 'Cancelar',
 
+    // General
     loading: 'Cargando...',
     error: 'Error',
     success: 'Éxito',
@@ -361,14 +372,8 @@ export const translations = {
     clear: 'Limpiar',
     noInternet: 'Sin conexión a internet',
     requiresInternet: 'Esta función requiere internet',
+
     // Settings
-    plugins: 'Plugins',
-    plugins: 'Plugin',
-    plugins: 'Plugins',
-    plugins: 'Plugins',
-    plugins: 'Плагины',
-    spotify: 'Spotify',
-    settings: 'Configuración',
     apiKeys: 'Claves API',
     pixabayApiKey: 'Clave API de Pixabay',
     pixabayApiKeyDesc: 'Se usa para buscar música gratuita en línea. Obtén una clave gratuita en pixabay.com/api/docs',
@@ -385,11 +390,17 @@ export const translations = {
   },
 
   pt: {
+    // Nav
     main: 'Início',
     musicManagement: 'Gerenciamento de Música',
     customize: 'Personalizar',
     exit: 'Sair',
+    plugins: 'Plugins',
+    settings: 'Configurações',
+    spotify: 'Spotify',
+    searchOnline: 'Buscar Online',
 
+    // Main page
     searchSongs: 'Buscar Músicas',
     searchPlaceholder: 'Buscar por título, artista...',
     onlineOnly: 'Apenas online',
@@ -418,10 +429,10 @@ export const translations = {
     playAll: 'Tocar Tudo',
     shuffle: 'Aleatório',
 
+    // Music Management
     importMusic: 'Importar Música',
     importFromFiles: 'Importar Arquivos',
     importFromFolder: 'Importar Pasta',
-    searchOnline: 'Buscar Online',
     searchPixabay: 'Buscar no Pixabay',
     searchFMA: 'Buscar no Free Music Archive',
     storageManagement: 'Gerenciamento de Armazenamento',
@@ -442,6 +453,7 @@ export const translations = {
     confirmClear: 'Tem certeza de que deseja limpar toda a biblioteca?',
     confirmDelete: 'Tem certeza de que deseja excluir esta música?',
 
+    // Customize
     appearance: 'Aparência',
     accentColor: 'Cor de Destaque',
     backgroundColor: 'Cor de Fundo',
@@ -455,6 +467,7 @@ export const translations = {
     preview: 'Visualizar',
     saveChanges: 'Salvar Alterações',
 
+    // Player
     nowPlaying: 'Tocando Agora',
     queue: 'Fila',
     previous: 'Anterior',
@@ -468,11 +481,13 @@ export const translations = {
     unmute: 'Ativar Som',
     addToQueue: 'Adicionar à Fila',
 
+    // Exit
     exitTitle: 'Sair do Omega',
     exitMessage: 'Tem certeza de que deseja sair?',
     yes: 'Sim, Sair',
     no: 'Cancelar',
 
+    // General
     loading: 'Carregando...',
     error: 'Erro',
     success: 'Sucesso',
@@ -487,14 +502,8 @@ export const translations = {
     clear: 'Limpar',
     noInternet: 'Sem conexão com a internet',
     requiresInternet: 'Este recurso requer internet',
+
     // Settings
-    plugins: 'Plugins',
-    plugins: 'Plugin',
-    plugins: 'Plugins',
-    plugins: 'Plugins',
-    plugins: 'Плагины',
-    spotify: 'Spotify',
-    settings: 'Configurações',
     apiKeys: 'Chaves de API',
     pixabayApiKey: 'Chave API do Pixabay',
     pixabayApiKeyDesc: 'Usado para buscar música gratuita online. Obtenha uma chave gratuita em pixabay.com/api/docs',
@@ -511,11 +520,17 @@ export const translations = {
   },
 
   ru: {
+    // Nav
     main: 'Главная',
     musicManagement: 'Управление Музыкой',
     customize: 'Настройка',
     exit: 'Выход',
+    plugins: 'Плагины',
+    settings: 'Настройки',
+    spotify: 'Spotify',
+    searchOnline: 'Поиск Онлайн',
 
+    // Main page
     searchSongs: 'Поиск Песен',
     searchPlaceholder: 'Поиск по названию, исполнителю...',
     onlineOnly: 'Только онлайн',
@@ -544,10 +559,10 @@ export const translations = {
     playAll: 'Воспроизвести Всё',
     shuffle: 'Перемешать',
 
+    // Music Management
     importMusic: 'Импорт Музыки',
     importFromFiles: 'Импорт Файлов',
     importFromFolder: 'Импорт Папки',
-    searchOnline: 'Поиск Онлайн',
     searchPixabay: 'Поиск на Pixabay',
     searchFMA: 'Поиск на Free Music Archive',
     storageManagement: 'Управление Хранилищем',
@@ -568,6 +583,7 @@ export const translations = {
     confirmClear: 'Вы уверены, что хотите очистить всю библиотеку?',
     confirmDelete: 'Вы уверены, что хотите удалить эту песню?',
 
+    // Customize
     appearance: 'Внешний Вид',
     accentColor: 'Цвет Акцента',
     backgroundColor: 'Цвет Фона',
@@ -581,6 +597,7 @@ export const translations = {
     preview: 'Предпросмотр',
     saveChanges: 'Сохранить',
 
+    // Player
     nowPlaying: 'Сейчас Играет',
     queue: 'Очередь',
     previous: 'Назад',
@@ -594,11 +611,13 @@ export const translations = {
     unmute: 'Включить звук',
     addToQueue: 'В Очередь',
 
+    // Exit
     exitTitle: 'Выход из Omega',
     exitMessage: 'Вы уверены, что хотите выйти?',
     yes: 'Да, Выйти',
     no: 'Отмена',
 
+    // General
     loading: 'Загрузка...',
     error: 'Ошибка',
     success: 'Успешно',
@@ -613,14 +632,8 @@ export const translations = {
     clear: 'Очистить',
     noInternet: 'Нет подключения к интернету',
     requiresInternet: 'Для этой функции нужен интернет',
+
     // Settings
-    plugins: 'Plugins',
-    plugins: 'Plugin',
-    plugins: 'Plugins',
-    plugins: 'Plugins',
-    plugins: 'Плагины',
-    spotify: 'Spotify',
-    settings: 'Настройки',
     apiKeys: 'API Ключи',
     pixabayApiKey: 'API ключ Pixabay',
     pixabayApiKeyDesc: 'Используется для поиска бесплатной музыки онлайн. Получите бесплатный ключ на pixabay.com/api/docs',
