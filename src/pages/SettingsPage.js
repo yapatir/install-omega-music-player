@@ -60,7 +60,7 @@ function ApiKeyInput({ value, onChange, onSave, onTest, testStatus, saved }) {
 }
 
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const GITHUB_API  = 'https://api.github.com/repos/yapatir/omega/releases/latest';
 
 // compare semver: returns true if remote > local
@@ -76,6 +76,7 @@ function isNewer(remote, local) {
 function UpdateChecker() {
   const [status, setStatus]     = useState('idle'); // idle | checking | up-to-date | available | error
   const [release, setRelease]   = useState(null);
+  const [errorMsg, setErrorMsg]       = useState('');
   const [lastChecked, setLastChecked] = useState(() => {
     return localStorage.getItem('omega_last_update_check') || null;
   });
@@ -84,10 +85,35 @@ function UpdateChecker() {
     setStatus('checking');
     try {
       const res = await fetch(GITHUB_API, {
-        headers: { Accept: 'application/vnd.github+json' },
+        headers: {
+          'Accept': 'application/vnd.github+json',
+          'User-Agent': 'Omega-Music-Player/' + APP_VERSION,
+          'X-GitHub-Api-Version': '2022-11-28',
+        },
       });
-      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+
+      // Handle rate limit specifically
+      if (res.status === 403 || res.status === 429) {
+        const remaining = res.headers.get('x-ratelimit-remaining');
+        const reset = res.headers.get('x-ratelimit-reset');
+        if (remaining === '0' && reset) {
+          const resetTime = new Date(parseInt(reset) * 1000).toLocaleTimeString();
+          throw new Error(`rate_limit:${resetTime}`);
+        }
+        throw new Error(`github_${res.status}`);
+      }
+
+      if (res.status === 404) {
+        throw new Error('no_releases');
+      }
+
+      if (!res.ok) throw new Error(`github_${res.status}`);
+
       const data = await res.json();
+
+      // Validate response shape
+      if (!data.tag_name) throw new Error('invalid_response');
+
       const now = new Date().toLocaleString();
       localStorage.setItem('omega_last_update_check', now);
       setLastChecked(now);
@@ -108,6 +134,18 @@ function UpdateChecker() {
         setStatus('up-to-date');
       }
     } catch (err) {
+      const msg = err.message || '';
+      if (msg.startsWith('rate_limit:')) {
+        setErrorMsg(`GitHub rate limit hit. Try again after ${msg.split(':')[1]}`);
+      } else if (msg === 'no_releases') {
+        setErrorMsg('No releases found on GitHub yet.');
+      } else if (msg === 'invalid_response') {
+        setErrorMsg('Unexpected response from GitHub.');
+      } else if (msg.startsWith('github_')) {
+        setErrorMsg(`GitHub returned error ${msg.replace('github_', '')}. Try again later.`);
+      } else {
+        setErrorMsg('Could not reach GitHub. Check your internet connection.');
+      }
       setStatus('error');
       console.error('Update check failed:', err);
     }
@@ -163,7 +201,7 @@ function UpdateChecker() {
       {status === 'error' && (
         <div className="update-status update-status--err">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Could not reach GitHub. Check your internet connection.
+          {errorMsg}
         </div>
       )}
 
