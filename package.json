@@ -1,14 +1,14 @@
 {
   "name": "omega",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "Omega Music Player - Offline Desktop App",
   "main": "electron/main.js",
   "homepage": "./",
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
+    "start": "node scripts/set-version.js && react-scripts start",
+    "build": "node scripts/set-version.js && react-scripts build",
     "electron": "electron .",
-    "electron-dev": "concurrently \"cross-env BROWSER=none react-scripts start\" \"wait-on http://localhost:3000 && electron .\"",
+    "electron-dev": "node scripts/set-version.js && concurrently \"cross-env BROWSER=none react-scripts start\" \"wait-on http://localhost:3000 && electron .\"",
     "build-electron": "npm run build && electron-builder",
     "pack": "electron-builder --dir",
     "electron-build": "npm run build && npx electron .",
