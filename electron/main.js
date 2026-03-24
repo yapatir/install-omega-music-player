@@ -1,13 +1,16 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require("electron");
 const path = require("path");
+const { autoUpdater } = require("electron-updater");
 const fs = require("fs");
+
 const isDev =
   process.env.NODE_ENV === "development" ||
   process.env.ELECTRON_ENV === "dev" ||
   (!app.isPackaged &&
-    !require("fs").existsSync(
-      require("path").join(__dirname, "../build/index.html"),
-    ));
+    !fs.existsSync(path.join(__dirname, "../build/index.html")));
+
+// Don't auto-download — wait for user to confirm
+autoUpdater.autoDownload = false;
 
 let mainWindow;
 
@@ -39,13 +42,16 @@ function createWindow() {
     mainWindow = null;
   });
 
-  // Suppress Chromium internal drag-event noise
   mainWindow.webContents.on("console-message", (event, level, message) => {
     if (message.includes("dragEvent is not defined")) event.preventDefault();
   });
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  createWindow();
+  // Silently check on startup, no auto-download
+  if (!isDev) autoUpdater.checkForUpdates().catch(() => {});
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
@@ -55,28 +61,57 @@ app.on("activate", () => {
   if (mainWindow === null) createWindow();
 });
 
-// IPC Handlers
-ipcMain.handle("app:quit", () => {
-  app.quit();
+// ── Auto-updater events ───────────────────────────────────
+autoUpdater.on("checking-for-update", () => {
+  mainWindow?.webContents.send("update:checking");
 });
 
-ipcMain.handle("window:minimize", () => {
-  mainWindow?.minimize();
+autoUpdater.on("update-available", (info) => {
+  mainWindow?.webContents.send("update:available", info.version);
 });
 
+autoUpdater.on("update-not-available", () => {
+  mainWindow?.webContents.send("update:not-available");
+});
+
+autoUpdater.on("download-progress", (progress) => {
+  mainWindow?.webContents.send("update:progress", progress.percent);
+});
+
+autoUpdater.on("update-downloaded", () => {
+  mainWindow?.webContents.send("update:downloaded");
+});
+
+autoUpdater.on("error", (err) => {
+  mainWindow?.webContents.send("update:error", err.message);
+});
+
+// ── IPC Handlers ──────────────────────────────────────────
+ipcMain.handle("app:quit", () => app.quit());
+ipcMain.handle("window:minimize", () => mainWindow?.minimize());
 ipcMain.handle("window:maximize", () => {
   if (mainWindow?.isMaximized()) mainWindow.unmaximize();
   else mainWindow?.maximize();
 });
+ipcMain.handle("window:close", () => mainWindow?.close());
 
-ipcMain.handle("window:close", () => {
-  mainWindow?.close();
+// Shell
+ipcMain.handle("shell:openExternal", (_, url) => shell.openExternal(url));
+
+// Updater
+ipcMain.handle("updater:check", () => {
+  autoUpdater.checkForUpdates().catch(() => {});
 });
+ipcMain.handle("updater:download", () => {
+  autoUpdater.downloadUpdate().catch(() => {});
+});
+ipcMain.handle("updater:install", () => autoUpdater.quitAndInstall());
+
+// Uptime
 let startTime = Date.now();
+ipcMain.handle("get-uptime", () => startTime);
 
-ipcMain.handle("get-uptime", () => {
-  return startTime;
-});
+// File dialogs
 ipcMain.handle("dialog:openFiles", async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ["openFile", "multiSelections"],
@@ -115,7 +150,7 @@ ipcMain.handle("dialog:openFolder", async () => {
   return { dir, files };
 });
 
-ipcMain.handle("file:readAsBase64", async (event, filePath) => {
+ipcMain.handle("file:readAsBase64", async (_, filePath) => {
   try {
     const data = fs.readFileSync(filePath);
     const ext = path.extname(filePath).replace(".", "").toLowerCase();
@@ -128,25 +163,23 @@ ipcMain.handle("file:readAsBase64", async (event, filePath) => {
       m4a: "audio/mp4",
       opus: "audio/opus",
     };
-    const mime = mimeMap[ext] || "audio/mpeg";
-    return `data:${mime};base64,${data.toString("base64")}`;
-  } catch (e) {
-    return null;
-  }
-});
-
-ipcMain.handle("storage:get", async (event, key) => {
-  const storePath = path.join(app.getPath("userData"), "omega-data.json");
-  try {
-    if (!fs.existsSync(storePath)) return null;
-    const data = JSON.parse(fs.readFileSync(storePath, "utf-8"));
-    return data[key] ?? null;
+    return `data:${mimeMap[ext] || "audio/mpeg"};base64,${data.toString("base64")}`;
   } catch {
     return null;
   }
 });
 
-ipcMain.handle("storage:set", async (event, key, value) => {
+ipcMain.handle("storage:get", async (_, key) => {
+  const storePath = path.join(app.getPath("userData"), "omega-data.json");
+  try {
+    if (!fs.existsSync(storePath)) return null;
+    return JSON.parse(fs.readFileSync(storePath, "utf-8"))[key] ?? null;
+  } catch {
+    return null;
+  }
+});
+
+ipcMain.handle("storage:set", async (_, key, value) => {
   const storePath = path.join(app.getPath("userData"), "omega-data.json");
   try {
     let data = {};

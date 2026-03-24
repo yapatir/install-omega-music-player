@@ -20,6 +20,35 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // Uptime
   getUptime: () => ipcRenderer.invoke("get-uptime"),
-  // Check if running in electron
+
+  // External links
+  openExternal: (url) => ipcRenderer.invoke("shell:openExternal", url),
+
+  // Updates
+  checkForUpdates: () => ipcRenderer.invoke("updater:check"),
+  downloadUpdate: () => ipcRenderer.invoke("updater:download"),
+  installUpdate: () => ipcRenderer.invoke("updater:install"),
+
+  onUpdate: (callback) => {
+    const handlers = {
+      "update:checking": () => callback("checking"),
+      "update:available": (_, version) => callback("available", version),
+      "update:not-available": () => callback("none"),
+      "update:downloaded": () => callback("downloaded"),
+      "update:progress": (_, percent) => callback("progress", percent),
+      "update:error": (_, msg) => callback("error", msg),
+    };
+
+    for (const [channel, handler] of Object.entries(handlers)) {
+      ipcRenderer.on(channel, handler);
+    }
+
+    return () => {
+      for (const [channel, handler] of Object.entries(handlers)) {
+        ipcRenderer.removeListener(channel, handler);
+      }
+    };
+  },
+
   isElectron: true,
 });

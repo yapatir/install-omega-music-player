@@ -1,35 +1,8 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import { useApp } from "../context/AppContext";
 import "./SettingsPage.css";
 
-// ── Helpers ───────────────────────────────────────────────
 const APP_VERSION = process.env.REACT_APP_VERSION || "1.0.0";
-
-function compareSemver(a, b) {
-  const parse = (v) => v.replace(/^v/, "").split(".").map(Number);
-  const [aMaj, aMin, aPat] = parse(a);
-  const [bMaj, bMin, bPat] = parse(b);
-  if (aMaj !== bMaj) return aMaj > bMaj ? 1 : -1;
-  if (aMin !== bMin) return aMin > bMin ? 1 : -1;
-  if (aPat !== bPat) return aPat > bPat ? 1 : -1;
-  return 0;
-}
-
-function formatRelease(r) {
-  const asset = r.assets?.find((a) => a.name.endsWith(".exe"));
-  const cmp = compareSemver(r.tag_name, APP_VERSION);
-  return {
-    version: r.tag_name,
-    name: r.name || r.tag_name,
-    body: r.body || "",
-    publishedAt: new Date(r.published_at).toLocaleDateString(),
-    downloadUrl: asset?.browser_download_url || r.html_url,
-    releaseUrl: r.html_url,
-    isCurrent: cmp === 0,
-    isNewer: cmp > 0,
-    isOlder: cmp < 0,
-  };
-}
 
 function openUrl(url) {
   if (window.electronAPI?.openExternal) window.electronAPI.openExternal(url);
@@ -167,170 +140,46 @@ function ApiKeyInput({ value, onChange, onSave, onTest, testStatus, saved }) {
   );
 }
 
-// ── ReleaseRow ────────────────────────────────────────────
-function ReleaseRow({ r, type }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div className={`release-row release-row--${type}`}>
-      <div className="release-row__main">
-        <span className="release-row__ver">{r.version}</span>
-        <span className="release-row__date">{r.publishedAt}</span>
-        {r.body && (
-          <button
-            className="release-row__notes-btn"
-            onClick={() => setExpanded((e) => !e)}
-          >
-            {expanded ? "hide ▲" : "notes ▼"}
-          </button>
-        )}
-        <div className="release-row__actions">
-          {type === "current" && (
-            <span className="release-row__installed">
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Installed
-            </span>
-          )}
-          {type === "update" && (
-            <button
-              className="release-row__btn release-row__btn--update"
-              onClick={() => openUrl(r.downloadUrl)}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-              >
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              Update
-            </button>
-          )}
-          {type === "downgrade" && (
-            <button
-              className="release-row__btn release-row__btn--downgrade"
-              onClick={() => openUrl(r.downloadUrl)}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-              >
-                <polyline points="17 1 21 5 17 9" />
-                <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-                <polyline points="7 23 3 19 7 15" />
-                <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-              </svg>
-              Downgrade
-            </button>
-          )}
-          <button
-            className="release-row__btn release-row__btn--ghost"
-            onClick={() => openUrl(r.releaseUrl)}
-          >
-            GitHub ↗
-          </button>
-        </div>
-      </div>
-      {expanded && r.body && (
-        <div className="release-row__body">
-          {r.body.slice(0, 500)}
-          {r.body.length > 500 ? "…" : ""}
-        </div>
-      )}
-    </div>
-  );
-}
-
 // ── UpdateChecker ─────────────────────────────────────────
 function UpdateChecker() {
   const [status, setStatus] = useState("idle");
-  const [releases, setReleases] = useState([]);
+  const [progress, setProgress] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
-  const [showAllDown, setShowAllDown] = useState(false);
-  const [lastChecked, setLastChecked] = useState(
-    () => localStorage.getItem("omega_last_update_check") || null,
-  );
-
-  const check = useCallback(async () => {
-    setStatus("checking");
-    setErrorMsg("");
-    try {
-      const res = await fetch(
-        "https://api.github.com/repos/yapatir/omega/releases?per_page=20",
-        {
-          headers: {
-            Accept: "application/vnd.github+json",
-            "User-Agent": `Omega-Music-Player/${APP_VERSION}`,
-            "X-GitHub-Api-Version": "2022-11-28",
-          },
-        },
-      );
-
-      if (res.status === 403 || res.status === 429) {
-        const reset = res.headers.get("x-ratelimit-reset");
-        const time = reset
-          ? new Date(parseInt(reset) * 1000).toLocaleTimeString()
-          : null;
-        throw new Error(
-          time ? `Rate limit hit. Try again after ${time}.` : "Rate limit hit.",
-        );
-      }
-      if (res.status === 404)
-        throw new Error("No releases found on GitHub yet.");
-      if (!res.ok) throw new Error(`GitHub returned error ${res.status}.`);
-
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0)
-        throw new Error("No releases found on GitHub yet.");
-
-      const parsed = data
-        .filter((r) => r.tag_name && !r.draft)
-        .map(formatRelease)
-        .sort((a, b) => compareSemver(b.version, a.version));
-
-      setReleases(parsed);
-      const now = new Date().toLocaleString();
-      localStorage.setItem("omega_last_update_check", now);
-      localStorage.setItem("omega_last_update_check_ts", Date.now().toString());
-      setLastChecked(now);
-      setStatus("done");
-    } catch (err) {
-      setErrorMsg(
-        err.message ||
-          "Could not reach GitHub. Check your internet connection.",
-      );
-      setStatus("error");
-    }
-  }, []);
+  const [newVersion, setNewVersion] = useState("");
 
   useEffect(() => {
-    const lastRaw = localStorage.getItem("omega_last_update_check_ts");
-    if (!lastRaw || Date.now() - parseInt(lastRaw) > 60 * 60 * 1000) check();
-  }, [check]);
+    if (!window.electronAPI?.onUpdate) return;
 
-  const updates = releases.filter((r) => r.isNewer);
-  const current = releases.find((r) => r.isCurrent);
-  const downgrades = releases.filter((r) => r.isOlder);
-  const visibleDown = showAllDown ? downgrades : downgrades.slice(0, 3);
+    const cleanup = window.electronAPI.onUpdate((event, payload) => {
+      setErrorMsg("");
+      if (event === "checking") {
+        setStatus("checking");
+        setProgress(0);
+      } else if (event === "available") {
+        setStatus("available");
+        if (payload) setNewVersion(payload);
+      } else if (event === "none") {
+        setStatus("none");
+      } else if (event === "progress") {
+        setStatus("progress");
+        setProgress(typeof payload === "number" ? Math.round(payload) : 0);
+      } else if (event === "downloaded") {
+        setStatus("downloaded");
+        setProgress(100);
+      } else if (event === "error") {
+        setStatus("error");
+        setErrorMsg(payload || "Update check failed.");
+      }
+    });
+
+    return () => {
+      if (typeof cleanup === "function") cleanup();
+    };
+  }, []);
+
+  const handleCheck = () => window.electronAPI?.checkForUpdates?.();
+  const handleDownload = () => window.electronAPI?.downloadUpdate?.();
+  const handleInstall = () => window.electronAPI?.installUpdate?.();
 
   return (
     <div className="update-checker">
@@ -340,16 +189,11 @@ function UpdateChecker() {
           <span className="update-checker__current">
             Current version: <strong>v{APP_VERSION}</strong>
           </span>
-          {lastChecked && (
-            <span className="update-checker__last">
-              Last checked: {lastChecked}
-            </span>
-          )}
         </div>
         <button
           className="btn btn--secondary"
-          onClick={check}
-          disabled={status === "checking"}
+          onClick={handleCheck}
+          disabled={status === "checking" || status === "progress"}
         >
           {status === "checking" ? (
             <>
@@ -369,11 +213,145 @@ function UpdateChecker() {
                 <polyline points="1 4 1 10 7 10" />
                 <path d="M3.51 15a9 9 0 1 0 .49-3.56" />
               </svg>{" "}
-              Check
+              Check for Updates
             </>
           )}
         </button>
       </div>
+
+      {/* Up to date */}
+      {status === "none" && (
+        <div className="update-status update-status--ok">
+          <svg
+            width="15"
+            height="15"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+          You're on the latest version!
+        </div>
+      )}
+
+      {/* Update available — confirm before downloading */}
+      {status === "available" && (
+        <div className="update-confirm">
+          <div className="update-confirm__info">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-3.56" />
+            </svg>
+            <span>
+              Update available
+              {newVersion ? (
+                <>
+                  {" "}
+                  — <strong>v{newVersion}</strong>
+                </>
+              ) : (
+                ""
+              )}
+            </span>
+          </div>
+          <div className="update-confirm__actions">
+            <button
+              className="btn btn--secondary"
+              onClick={() => setStatus("none")}
+            >
+              Later
+            </button>
+            <button className="btn btn--primary" onClick={handleDownload}>
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              >
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>{" "}
+              Download
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Downloading */}
+      {status === "progress" && (
+        <div className="update-checker__download">
+          <div className="update-checker__download-label">
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Downloading update... {progress}%
+          </div>
+          <div className="update-checker__progress-bar">
+            <div
+              className="update-checker__progress-fill"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Downloaded — ready to install */}
+      {status === "downloaded" && (
+        <div className="update-checker__downloaded">
+          <div className="update-status update-status--ok">
+            <svg
+              width="15"
+              height="15"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Update downloaded — ready to install!
+          </div>
+          <button className="btn btn--primary" onClick={handleInstall}>
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+            >
+              <polyline points="1 4 1 10 7 10" />
+              <path d="M3.51 15a9 9 0 1 0 .49-3.56" />
+            </svg>{" "}
+            Restart &amp; Install
+          </button>
+        </div>
+      )}
 
       {/* Error */}
       {status === "error" && (
@@ -390,104 +368,7 @@ function UpdateChecker() {
             <line x1="12" y1="8" x2="12" y2="12" />
             <line x1="12" y1="16" x2="12.01" y2="16" />
           </svg>
-          {errorMsg}
-        </div>
-      )}
-
-      {/* Up to date */}
-      {status === "done" && updates.length === 0 && (
-        <div className="update-status update-status--ok">
-          <svg
-            width="15"
-            height="15"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-          You're on the latest version!
-        </div>
-      )}
-
-      {/* Updates section */}
-      {updates.length > 0 && (
-        <div className="ver-section">
-          <div className="ver-section__label ver-section__label--update">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-            >
-              <polyline points="1 4 1 10 7 10" />
-              <path d="M3.51 15a9 9 0 1 0 .49-3.56" />
-            </svg>
-            Updates available ({updates.length})
-          </div>
-          {updates.map((r) => (
-            <ReleaseRow key={r.version} r={r} type="update" />
-          ))}
-        </div>
-      )}
-
-      {/* Current version */}
-      {current && (
-        <div className="ver-section">
-          <div className="ver-section__label ver-section__label--current">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-            Installed
-          </div>
-          <ReleaseRow r={current} type="current" />
-        </div>
-      )}
-
-      {/* Downgrade section */}
-      {downgrades.length > 0 && (
-        <div className="ver-section">
-          <div className="ver-section__label ver-section__label--downgrade">
-            <svg
-              width="13"
-              height="13"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            >
-              <polyline points="17 1 21 5 17 9" />
-              <path d="M3 11V9a4 4 0 0 1 4-4h14" />
-              <polyline points="7 23 3 19 7 15" />
-              <path d="M21 13v2a4 4 0 0 1-4 4H3" />
-            </svg>
-            Older versions
-          </div>
-          {visibleDown.map((r) => (
-            <ReleaseRow key={r.version} r={r} type="downgrade" />
-          ))}
-          {downgrades.length > 3 && (
-            <button
-              className="ver-show-more"
-              onClick={() => setShowAllDown((s) => !s)}
-            >
-              {showAllDown
-                ? "▲ Show less"
-                : `▼ Show ${downgrades.length - 3} more`}
-            </button>
-          )}
+          {errorMsg || "Something went wrong. Try again."}
         </div>
       )}
     </div>
@@ -503,30 +384,31 @@ export default function SettingsPage() {
   const [pixabaySaved, setPixabaySaved] = useState(false);
   const [startTime, setStartTime] = useState(null);
   const [now, setNow] = useState(Date.now());
+
   useEffect(() => {
     window.electronAPI.getUptime().then(setStartTime);
   }, []);
-  const handleSavePixabay = async () => {
-    await setPixabayKey(localPixabayKey.trim());
-    setPixabaySaved(true);
-    setTimeout(() => setPixabaySaved(false), 2500);
-  };
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
 
+  useEffect(() => {
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
+
   const elapsed = Math.floor((now - startTime) / 1000);
 
   const formatTime = (totalSeconds) => {
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-
     return `${hours} hours, ${minutes} minutes, ${seconds} seconds`;
   };
+
+  const handleSavePixabay = async () => {
+    await setPixabayKey(localPixabayKey.trim());
+    setPixabaySaved(true);
+    setTimeout(() => setPixabaySaved(false), 2500);
+  };
+
   const handleTestPixabay = async () => {
     if (!localPixabayKey.trim()) return;
     setPixabayTestStatus("testing");
@@ -734,7 +616,7 @@ export default function SettingsPage() {
           </div>
         </section>
 
-        {/* Updates & Versions */}
+        {/* Updates */}
         <section className="settings-section">
           <div className="settings-section__header">
             <div className="settings-section__icon">
@@ -753,9 +635,7 @@ export default function SettingsPage() {
             </div>
             <div>
               <h2 className="settings-section__title">Updates & Versions</h2>
-              <p className="settings-section__desc">
-                Update to the latest or downgrade to a previous version.
-              </p>
+              <p className="settings-section__desc">Keep the app up to date.</p>
             </div>
           </div>
           <div className="settings-card">
